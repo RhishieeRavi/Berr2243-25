@@ -83,4 +83,5 @@ Files in branch: `index.js`, `.gitignore`, `README.md`, `package.json`, `package
 ## 8. Performance Observation
 
 Time to connect: `~60ms`
+``` ```
 Repeat performance: Slightly faster due to cached connection.
