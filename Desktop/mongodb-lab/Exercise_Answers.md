@@ -48,28 +48,39 @@ use testDB
 db.users.find().pretty()
 ```
 Output:
-
+```
+[
   { "_id": ObjectId("68e7483ba542566278f402c8"), "name": "Rhishiee", "age": 2002 },
   { "_id": ObjectId("68e74b9ca542566278f402e1"), "name": "Rhishiee Ravi", "age": 2002 }
+]
+```
 
 ## 5. File System and Dependencies
 
 Absolute path:
+```
 C:\Users\Rhishiee\Desktop\mongodb-Lab\package-lock.json
-MongoDB driver version: 6.9.0
+```
+MongoDB driver version: `6.9.0`
 
 ## 6. Troubleshooting Practice
 
-Error when MongoDB stopped: Error: connect ECONNREFUSED 127.0.0.1:27017
+Error when MongoDB stopped: 
+```
+Error: connect ECONNREFUSED 127.0.0.1:27017
+```
 
-Restart command: mongod.exe --dbpath C:\data\db
+Restart command: 
+```
+mongod.exe --dbpath C:\data\db
+```
 
 ## 7. GitHub Repository Structure
 
 Last commit timestamp: 12 hours ago
-Files in branch: index.js, .gitignore, README.md, package.json, package-lock.json, Exercise_Answers.md
+Files in branch: `index.js`, `.gitignore`, `README.md`, `package.json`, `package-lock.json`, `Exercise_Answers.md`
 
 ## 8. Performance Observation
 
-Time to connect: ~60ms
+Time to connect: `~60ms`
 Repeat performance: Slightly faster due to cached connection.
