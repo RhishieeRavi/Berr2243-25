@@ -27,8 +27,10 @@ Query result: {
 }
 ```
 
-**Error (without `await client.connect()`): MongoNotConnectedError: MongoClient must be connected to perform this operation
+**Error (without `await client.connect()`): 
+```
 MongoNotConnectedError: MongoClient must be connected to perform this operation
+```
 
 ## 3. MongoDB Connection Failure
 
