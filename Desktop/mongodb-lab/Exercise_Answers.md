@@ -50,8 +50,8 @@ db.users.find().pretty()
 Output:
 ```
 [
-  { "_id": ObjectId("68e7483ba542566278f402c8"), "name": "Rhishiee", "age": 2002 },
-  { "_id": ObjectId("68e74b9ca542566278f402e1"), "name": "Rhishiee Ravi", "age": 2002 }
+  { "_id": ObjectId("68e7483ba542566278f402c8"), "name": "Alice", "age": 25 },
+  { "_id": ObjectId("68e74b9ca542566278f402e1"), "name": "Rhishiee", "age": 23 }
 ]
 ```
 
