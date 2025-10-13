@@ -79,10 +79,10 @@ mongod.exe --dbpath C:\data\db
 
 ## 7. GitHub Repository Structure
 
-Last commit timestamp: 12 hours ago
-Files in branch: `index.js`, `.gitignore`, `README.md`, `package.json`, `package-lock.json`, `Exercise_Answers.md`
+**Last commit timestamp:** 12 hours ago  
+**Files in branch:** `index.js`, `.gitignore`, `README.md`, `package.json`, `package-lock.json`, `Exercise_Answers.md`
 
 ## 8. Performance Observation
 
-Time to connect: `~60ms`
+Time to connect: `~60ms`  
 Repeat performance: Slightly faster due to cached connection.
