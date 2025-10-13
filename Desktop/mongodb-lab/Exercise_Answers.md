@@ -35,7 +35,9 @@ MongoNotConnectedError: MongoClient must be connected to perform this operation
 **Change port to:** `27018`
 
 Error Message:
+```
 MongoServerSelectionError: connect ECONNREFUSED 127.0.0.1:27018
+```
 
 ## 4. MongoDB Shell Query
 
