@@ -67,7 +67,7 @@ MongoDB driver version: `6.9.0`
 
 ## 6. Troubleshooting Practice
 
-Error when MongoDB stopped: 
+**Error when MongoDB stopped:** 
 ```
 Error: connect ECONNREFUSED 127.0.0.1:27018
 ```
@@ -84,5 +84,5 @@ mongod.exe --dbpath C:\data\db
 
 ## 8. Performance Observation
 
-Time to connect: `~60ms`  
-Repeat performance: Slightly faster due to cached connection.
+**Time to connect:** `~60ms`  
+**Repeat performance:** Slightly faster due to cached connection.
