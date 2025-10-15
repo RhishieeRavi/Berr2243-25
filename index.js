@@ -46,6 +46,12 @@ async function main() {
     }).toArray();
     console.log("Available drivers:", availableDrivers);
 
+    const updateResult = await db.collection('drivers').updateOne(
+      { name: "John Doe" },
+      { $inc: { rating: 0.1 } }
+    );
+    console.log(`Driver updated with result: ${updateResult}`);
+
   } finally {
     await client.close();
   }
