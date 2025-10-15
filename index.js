@@ -34,11 +34,11 @@ async function main() {
 
     const driversCollection = db.collection("drivers");
 
-    drivers.forEach(async (driver) => 
+    for (const driver of drivers) 
       {
       const result = await driversCollection.insertOne(driver);
       console.log(`New driver created with result: ${result}`);    
-    } );
+    } 
 
     const availableDrivers = await db.collection('drivers').find({
       isAvailable: true,
