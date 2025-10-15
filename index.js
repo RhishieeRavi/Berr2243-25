@@ -18,8 +18,10 @@ const drivers = [
 console.log("All drivers:", drivers);
 
 // TODO: show all driver names
+drivers.forEach(driver => console.log("Driver name:", driver.name));
 
 // TODO: add additional driver
+drivers.push({ name: "Rhishiee Ravi", vehicleType: "Hatchback", isAvailable: true, rating: 4.7 });
 
 async function main() {
   // Replace <connection-string> with your MongoDB URI
