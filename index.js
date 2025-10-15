@@ -40,6 +40,12 @@ async function main() {
       console.log(`New driver created with result: ${result}`);    
     } );
 
+    const availableDrivers = await db.collection('drivers').find({
+      isAvailable: true,
+      rating: { $gte: 4.5 }
+    }).toArray();
+    console.log("Available drivers:", availableDrivers);
+
   } finally {
     await client.close();
   }
