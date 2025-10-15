@@ -37,7 +37,7 @@ async function main() {
     for (const driver of drivers) 
       {
       const result = await driversCollection.insertOne(driver);
-      console.log(`New driver created with result: ${result}`);    
+      console.log("New driver created with result:", result);    
     } 
 
     const availableDrivers = await db.collection('drivers').find({
@@ -50,7 +50,7 @@ async function main() {
       { name: "John Doe" },
       { $inc: { rating: 0.1 } }
     );
-    console.log(`Driver updated with result: ${updateResult}`);
+    console.log("Driver updated with result:", updateResult);
 
     const deleteResult = await db.collection('drivers').deleteOne({ isAvailable: false });
     console.log("Driver deleted with result:", deleteResult);
