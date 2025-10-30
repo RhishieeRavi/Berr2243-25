@@ -77,6 +77,67 @@ app.delete('/rides/:id', async (req, res) => {
   }
 });
 
+// ---------------- USER CRUD ENDPOINTS ----------------
+
+// CREATE user (POST)
+app.post('/users', async (req, res) => {
+  try {
+    const result = await db.collection('users').insertOne(req.body);
+    res.status(201).json({ id: result.insertedId });
+  } catch (err) {
+    console.error("POST /users Error:", err.message);
+    res.status(400).json({ error: "Invalid user data" });
+  }
+});
+
+// READ all users (GET)
+app.get('/users', async (req, res) => {
+  try {
+    const users = await db.collection('users').find().toArray();
+    res.status(200).json(users);
+  } catch (err) {
+    console.error("GET /users Error:", err.message);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// UPDATE user (PATCH)
+app.patch('/users/:id', async (req, res) => {
+  try {
+    const result = await db.collection('users').updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: req.body }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({ updated: result.modifiedCount });
+  } catch (err) {
+    console.error("PATCH /users Error:", err.message);
+    res.status(400).json({ error: "Invalid user ID or data" });
+  }
+});
+
+// DELETE user (DELETE)
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const result = await db.collection('users').deleteOne(
+      { _id: new ObjectId(req.params.id) }
+    );
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({ deleted: result.deletedCount });
+  } catch (err) {
+    console.error("DELETE /users Error:", err.message);
+    res.status(400).json({ error: "Invalid user ID" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
