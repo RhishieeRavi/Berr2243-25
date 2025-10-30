@@ -1,9 +1,11 @@
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
+const cors = require('cors');
 
 const port = 3000;
 const app = express();
 app.use(express.json());
+app.use(cors()); // ✅ Allow frontend and Postman access
 
 let db;
 
@@ -138,6 +140,7 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
+// Start server (must be last)
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
