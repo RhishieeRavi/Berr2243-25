@@ -225,4 +225,5 @@ app.delete('/users/:id', async (req, res) => {
 
 #### Result:
 - The HTML dashboard connects to the backend successfully.
+
 - CRUD operations can now be performed visually through the browser.
