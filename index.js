@@ -45,6 +45,22 @@ app.post('/rides', async (req, res) => {
   }
 });
 
+// GET /rides/:id - Track ride by ID
+app.get('/rides/:id', async (req, res) => {
+  try {
+    const ride = await db.collection('rides').findOne({ _id: new ObjectId(req.params.id) });
+
+    if (!ride) {
+      return res.status(404).json({ error: "Ride not found" });
+    }
+
+    res.status(200).json(ride);
+  } catch (err) {
+    res.status(400).json({ error: "Invalid ride ID" });
+  }
+});
+
+
 // PATCH /rides/:id - Update ride status
 app.patch('/rides/:id', async (req, res) => {
   try {
@@ -139,6 +155,114 @@ app.delete('/users/:id', async (req, res) => {
     res.status(400).json({ error: "Invalid user ID" });
   }
 });
+
+// ---------------- Week 4 APIs ----------------
+
+// Customer Login
+app.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await db.collection('users').findOne({ email, password, role: "customer" });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+    res.status(200).json({ message: "Login successful", user });
+  } catch (err) {
+    res.status(500).json({ error: "Login error" });
+  }
+});
+
+// Customer View Profile
+app.get('/users/:id', async (req, res) => {
+  try {
+    const user = await db.collection('users').findOne({ _id: new ObjectId(req.params.id) });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(400).json({ error: "Invalid user ID" });
+  }
+});
+
+//Driver Login
+app.post('/driver/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const driver = await db.collection('users').findOne({ email, password, role: "driver" });
+    if (!driver) return res.status(401).json({ message: "Invalid credentials" });
+
+    res.status(200).json({ message: "Driver login successful", driver });
+  } catch (err) {
+    res.status(500).json({ error: "Login error" });
+  }
+});
+
+// Driver Update Availability
+app.patch('/drivers/:id/status', async (req, res) => {
+  try {
+    const result = await db.collection('users').updateOne(
+      { _id: new ObjectId(req.params.id), role: "driver" },
+      { $set: { status: req.body.status } }
+    );
+
+    if (result.modifiedCount === 0) return res.status(404).json({ error: "Driver not found" });
+
+    res.status(200).json({ updated: 1 });
+  } catch (err) {
+    res.status(400).json({ error: "Invalid ID or data" });
+  }
+});
+
+// Driver View Earnings
+app.get('/drivers/:id/earnings', async (req, res) => {
+  try {
+    // for lab demo only
+    res.status(200).json({ driverId: req.params.id, earnings: "RM560.00" });
+  } catch {
+    res.status(404).json({ error: "Not found" });
+  }
+});
+
+// Admin Login
+app.post('/admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const admin = await db.collection('users').findOne({ email, password, role: "admin" });
+    if (!admin) return res.status(401).json({ message: "Invalid admin credentials" });
+
+    res.status(200).json({ message: "Admin login successful", admin });
+  } catch (err) {
+    res.status(500).json({ error: "Login error" });
+  }
+});
+
+// Admin Block User
+app.delete('/admin/users/:id', async (req, res) => {
+  try {
+    const result = await db.collection('users').updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { status: "blocked" } }
+    );
+
+    if (result.modifiedCount === 0) return res.status(404).json({ error: "User not found" });
+
+    res.status(204).send();
+  } catch {
+    res.status(400).json({ error: "Invalid ID" });
+  }
+});
+
+// Admin View System Analytics
+app.get('/admin/analytics', async (req, res) => {
+  const userCount = await db.collection('users').countDocuments();
+  const rideCount = await db.collection('rides').countDocuments();
+
+  res.status(200).json({ totalUsers: userCount, totalRides: rideCount });
+});
+
+
 
 // Start server (must be last)
 app.listen(port, () => {
