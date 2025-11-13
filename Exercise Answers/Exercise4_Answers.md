@@ -38,3 +38,48 @@
 | Block User            | `/admin/users/{id}` | **DELETE** | **204 No Content**, 403 Forbidden |
 | View System Analytics | `/admin/analytics`  | **GET**    | **200 OK**, 403 Forbidden         |
 
+## Task 4. Screenshots
+
+#### 1. Customer Registration
+
+![Postman POST Screenshot](../Screenshots/CustomerRegistration.png)
+
+#### 2. Customer Login
+
+![Postman POST Screenshot](../Screenshots/CustomerLogin.png)
+
+#### 3. Driver Registration
+
+![Postman POST Screenshot](../Screenshots/DriverRegistration.png)
+
+#### 4. Driver Login
+
+![Postman POST Screenshot](../Screenshots/DriverLogin.png)
+
+#### 5. Book Ride 
+
+![Postman POST Screenshot](../Screenshots/BookRide.png)
+
+#### 6. Track Ride
+
+![Postman POST Screenshot](../Screenshots/TrackRide.png)
+
+#### 7. Driver Update Availability
+
+![Postman POST Screenshot](../Screenshots/DriverUpdateAvailability.png)
+
+#### 8. View Driver Earnings
+
+![Postman POST Screenshot](../Screenshots/ViewDriverEarnings.png)
+
+#### 9. Admin Login
+
+![Postman POST Screenshot](../Screenshots/AdminLogin.png)
+
+#### 10. Admin Block User
+
+![Postman POST Screenshot](../Screenshots/AdminBlockUser.png)
+
+#### 11. Admin Analytics 
+
+![Postman POST Screenshot](../Screenshots/Adminanalytics.png)
