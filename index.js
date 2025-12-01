@@ -28,6 +28,27 @@ async function connectToMongoDB() {
 
 connectToMongoDB();
 
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+};
+
+const authorize = (roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  next();
+};
+
 // GET /rides - Fetch all rides
 app.get('/rides', async (req, res) => {
   try {
@@ -171,20 +192,6 @@ app.delete('/users/:id', async (req, res) => {
 
 // ---------------- Week 4 APIs ----------------
 
-// Customer Login
-app.post('/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await db.collection('users').findOne({ email, password, role: "customer" });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
-
-    res.status(200).json({ message: "Login successful", user });
-  } catch (err) {
-    res.status(500).json({ error: "Login error" });
-  }
-});
-
 // Customer View Profile
 app.get('/users/:id', async (req, res) => {
   try {
@@ -197,19 +204,6 @@ app.get('/users/:id', async (req, res) => {
   }
 });
 
-//Driver Login
-app.post('/driver/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const driver = await db.collection('users').findOne({ email, password, role: "driver" });
-    if (!driver) return res.status(401).json({ message: "Invalid credentials" });
-
-    res.status(200).json({ message: "Driver login successful", driver });
-  } catch (err) {
-    res.status(500).json({ error: "Login error" });
-  }
-});
 
 // Driver Update Availability
 app.patch('/drivers/:id/status', async (req, res) => {
@@ -237,22 +231,8 @@ app.get('/drivers/:id/earnings', async (req, res) => {
   }
 });
 
-// Admin Login
-app.post('/admin/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const admin = await db.collection('users').findOne({ email, password, role: "admin" });
-    if (!admin) return res.status(401).json({ message: "Invalid admin credentials" });
-
-    res.status(200).json({ message: "Admin login successful", admin });
-  } catch (err) {
-    res.status(500).json({ error: "Login error" });
-  }
-});
-
 // Admin Block User
-app.delete('/admin/users/:id', async (req, res) => {
+app.delete('/admin/users/:id', authenticate, authorize(['admin']), async (req, res) => {
   try {
     const result = await db.collection('users').updateOne(
       { _id: new ObjectId(req.params.id) },
