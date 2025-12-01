@@ -1,6 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const port = 3000;
 const app = express();
@@ -100,11 +103,21 @@ app.delete('/rides/:id', async (req, res) => {
 // CREATE user (POST)
 app.post('/users', async (req, res) => {
   try {
-    const result = await db.collection('users').insertOne(req.body);
-    res.status(201).json({ id: result.insertedId });
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+    const user = {
+      name: req.body.name,
+      email: req.body.email,
+      password: hashedPassword,
+      role: req.body.role,
+      status: "active"
+    };
+
+    await db.collection('users').insertOne(user);
+    res.status(201).json({ message: "User created" });
+
   } catch (err) {
-    console.error("POST /users Error:", err.message);
-    res.status(400).json({ error: "Invalid user data" });
+    res.status(400).json({ error: "Registration failed" });
   }
 });
 
@@ -253,6 +266,23 @@ app.delete('/admin/users/:id', async (req, res) => {
     res.status(400).json({ error: "Invalid ID" });
   }
 });
+
+app.post('/auth/login', async (req, res) => {
+  const user = await db.collection('users').findOne({ email: req.body.email });
+
+  if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  const token = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+
+  res.status(200).json({ token });
+});
+
 
 // Admin View System Analytics
 app.get('/admin/analytics', async (req, res) => {
