@@ -76,7 +76,7 @@ app.post('/rides', authenticate, async (req, res) => {
 });
 
 // GET /rides/:id - Track ride by ID
-app.get('/rides/:id', async (req, res) => {
+app.get('/rides/:id', authenticate, async (req, res) => {
   try {
     const ride = await db.collection('rides').findOne({ _id: new ObjectId(req.params.id) });
 
@@ -92,7 +92,7 @@ app.get('/rides/:id', async (req, res) => {
 
 
 // PATCH /rides/:id - Update ride status
-app.patch('/rides/:id', async (req, res) => {
+app.patch('/rides/:id', authenticate, async (req, res) => {
   try {
     const result = await db.collection('rides').updateOne(
       { _id: new ObjectId(req.params.id) },
@@ -109,7 +109,7 @@ app.patch('/rides/:id', async (req, res) => {
 });
 
 // DELETE /rides/:id - Cancel a ride
-app.delete('/rides/:id', async (req, res) => {
+app.delete('/rides/:id', authenticate, async (req, res) => {
   try {
     const result = await db.collection('rides').deleteOne(
       { _id: new ObjectId(req.params.id) }
@@ -136,7 +136,7 @@ app.post('/users', async (req, res) => {
       name: req.body.name,
       email: req.body.email,
       password: hashedPassword,
-      role: req.body.role,
+      role: "customer",
       status: "active"
     };
 
@@ -149,7 +149,7 @@ app.post('/users', async (req, res) => {
 });
 
 // READ all users (GET)
-app.get('/users', async (req, res) => {
+app.get('/users', authenticate, authorize(['admin']), async (req, res) => {
   try {
     const users = await db.collection('users').find().toArray();
     res.status(200).json(users);
