@@ -28,6 +28,12 @@ async function connectToMongoDB() {
 
 connectToMongoDB();
 
+app.use((req, res, next) => {
+  if (!db) return res.status(503).json({ error: "Database not ready" });
+  next();
+});
+
+
 const authenticate = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
 
@@ -50,7 +56,7 @@ const authorize = (roles) => (req, res, next) => {
 };
 
 // GET /rides - Fetch all rides
-app.get('/rides', async (req, res) => {
+app.get('/rides', authenticate, async (req, res) => {
   try {
     const rides = await db.collection('rides').find().toArray();
     res.status(200).json(rides);
@@ -60,7 +66,7 @@ app.get('/rides', async (req, res) => {
 });
 
 // POST /rides - Create a new ride
-app.post('/rides', async (req, res) => {
+app.post('/rides', authenticate, async (req, res) => {
   try {
     const result = await db.collection('rides').insertOne(req.body);
     res.status(201).json({ id: result.insertedId });
@@ -193,7 +199,7 @@ app.delete('/users/:id', async (req, res) => {
 // ---------------- Week 4 APIs ----------------
 
 // Customer View Profile
-app.get('/users/:id', async (req, res) => {
+app.get('/users/:id', authenticate, async (req, res) => {
   try {
     const user = await db.collection('users').findOne({ _id: new ObjectId(req.params.id) });
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -206,7 +212,7 @@ app.get('/users/:id', async (req, res) => {
 
 
 // Driver Update Availability
-app.patch('/drivers/:id/status', async (req, res) => {
+app.patch('/drivers/:id/status', authenticate, authorize(['driver']), async (req, res) => {
   try {
     const result = await db.collection('users').updateOne(
       { _id: new ObjectId(req.params.id), role: "driver" },
@@ -222,7 +228,7 @@ app.patch('/drivers/:id/status', async (req, res) => {
 });
 
 // Driver View Earnings
-app.get('/drivers/:id/earnings', async (req, res) => {
+app.get('/drivers/:id/earnings', authenticate, authorize(['driver']), async (req, res) => {
   try {
     // for lab demo only
     res.status(200).json({ driverId: req.params.id, earnings: "RM560.00" });
@@ -234,15 +240,16 @@ app.get('/drivers/:id/earnings', async (req, res) => {
 // Admin Block User
 app.delete('/admin/users/:id', authenticate, authorize(['admin']), async (req, res) => {
   try {
-    const result = await db.collection('users').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: { status: "blocked" } }
-    );
+    const result = await db.collection('users').deleteOne({
+      _id: new ObjectId(req.params.id)
+    });
 
-    if (result.modifiedCount === 0) return res.status(404).json({ error: "User not found" });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    res.status(204).send();
-  } catch {
+    res.status(204).send(); // No Content
+  } catch (err) {
     res.status(400).json({ error: "Invalid ID" });
   }
 });
@@ -265,7 +272,7 @@ app.post('/auth/login', async (req, res) => {
 
 
 // Admin View System Analytics
-app.get('/admin/analytics', async (req, res) => {
+app.get('/admin/analytics', authenticate, authorize(['admin']), async (req, res) => {
   const userCount = await db.collection('users').countDocuments();
   const rideCount = await db.collection('rides').countDocuments();
 
