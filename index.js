@@ -65,13 +65,37 @@ app.get('/rides', authenticate, async (req, res) => {
   }
 });
 
-// POST /rides - Create a new ride
-app.post('/rides', authenticate, async (req, res) => {
+// ---------------- RIDE MANAGEMENT ----------------
+
+// REQUEST a Ride (Passenger Only)
+app.post('/rides', authenticate, authorize(['passenger']), async (req, res) => {
   try {
-    const result = await db.collection('rides').insertOne(req.body);
-    res.status(201).json({ id: result.insertedId });
+    const { pickup, destination, fare, distance } = req.body;
+
+    // 1. Validation
+    if (!pickup || !destination || !fare) {
+      return res.status(400).json({ error: "Pickup, destination, and fare are required." });
+    }
+
+    const newRide = {
+      passengerId: new ObjectId(req.user.userId), // Link to logged-in user
+      driverId: null,      // No driver yet
+      pickup,
+      destination,
+      fare,
+      distance,
+      status: "requested", // Initial status
+      createdAt: new Date()
+    };
+
+    const result = await db.collection('rides').insertOne(newRide);
+    res.status(201).json({ 
+      message: "Ride requested successfully", 
+      rideId: result.insertedId 
+    });
+
   } catch (err) {
-    res.status(400).json({ error: "Invalid ride data" });
+    res.status(500).json({ error: "Failed to request ride" });
   }
 });
 
@@ -125,26 +149,53 @@ app.delete('/rides/:id', authenticate, async (req, res) => {
   }
 });
 
-// ---------------- USER CRUD ENDPOINTS ----------------
+// ---------------- USER AUTHENTICATION ----------------
 
-// CREATE user (POST)
+// REGISTER User (Updated for MyTaxi)
 app.post('/users', async (req, res) => {
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const { name, email, password, role, carDetails } = req.body;
+
+    // 1. Basic Validation
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // 2. Validate Role
+    if (!['passenger', 'driver', 'admin'].includes(role)) {
+      return res.status(400).json({ error: "Invalid role. Must be 'passenger' or 'driver'." });
+    }
+
+    // 3. Driver Specific Validation
+    if (role === 'driver' && (!carDetails || !carDetails.make || !carDetails.plate)) {
+      return res.status(400).json({ error: "Drivers must provide car details (make, plate)." });
+    }
+
+    // 4. Hash Password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = {
-      name: req.body.name,
-      email: req.body.email,
+      name,
+      email,
       password: hashedPassword,
-      role: "customer",
-      status: "active"
+      role, // 'passenger' or 'driver'
+      carDetails: role === 'driver' ? carDetails : null, // Only for drivers
+      status: "active",
+      createdAt: new Date()
     };
 
-    await db.collection('users').insertOne(user);
-    res.status(201).json({ message: "User created" });
+    const result = await db.collection('users').insertOne(user);
+    res.status(201).json({ 
+      message: "User registered successfully", 
+      userId: result.insertedId 
+    });
 
   } catch (err) {
-    res.status(400).json({ error: "Registration failed" });
+    // Check for duplicate email error (MongoDB code 11000)
+    if (err.code === 11000) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+    res.status(500).json({ error: "Registration failed" });
   }
 });
 
