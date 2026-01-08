@@ -55,13 +55,59 @@ const authorize = (roles) => (req, res, next) => {
   next();
 };
 
-// GET /rides - Fetch all rides
-app.get('/rides', authenticate, async (req, res) => {
+// TRACK RIDE (View Ride + Driver/Passenger Info)
+app.get('/rides/:id', authenticate, async (req, res) => {
   try {
-    const rides = await db.collection('rides').find().toArray();
-    res.status(200).json(rides);
+    const rideId = new ObjectId(req.params.id);
+
+    const pipeline = [
+      { $match: { _id: rideId } },
+      // Join with Driver info
+      {
+        $lookup: {
+          from: "users",
+          localField: "driverId",
+          foreignField: "_id",
+          as: "driverDetails"
+        }
+      },
+      // Join with Passenger info (so Driver can see passenger name)
+      {
+        $lookup: {
+          from: "users",
+          localField: "passengerId",
+          foreignField: "_id",
+          as: "passengerDetails"
+        }
+      },
+      {
+        $project: {
+          pickup: 1,
+          destination: 1,
+          fare: 1,
+          status: 1,
+          // Extract specific details to show
+          driver: { 
+            name: { $arrayElemAt: ["$driverDetails.name", 0] },
+            car: { $arrayElemAt: ["$driverDetails.carDetails", 0] }
+          },
+          passenger: { 
+            name: { $arrayElemAt: ["$passengerDetails.name", 0] }
+          }
+        }
+      }
+    ];
+
+    const ride = await db.collection('rides').aggregate(pipeline).toArray();
+
+    if (!ride.length) {
+      return res.status(404).json({ error: "Ride not found" });
+    }
+
+    res.status(200).json(ride[0]);
+
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch rides" });
+    res.status(400).json({ error: "Invalid ride ID" });
   }
 });
 
@@ -99,36 +145,82 @@ app.post('/rides', authenticate, authorize(['passenger']), async (req, res) => {
   }
 });
 
-// GET /rides/:id - Track ride by ID
-app.get('/rides/:id', authenticate, async (req, res) => {
+// GET Available Rides (Driver Only)
+app.get('/rides/available', authenticate, authorize(['driver']), async (req, res) => {
   try {
-    const ride = await db.collection('rides').findOne({ _id: new ObjectId(req.params.id) });
-
-    if (!ride) {
-      return res.status(404).json({ error: "Ride not found" });
-    }
-
-    res.status(200).json(ride);
+    // Find rides that are requested but have no driver yet
+    const rides = await db.collection('rides').find({ 
+      status: "requested",
+      driverId: null 
+    }).toArray();
+    
+    res.status(200).json(rides);
   } catch (err) {
-    res.status(400).json({ error: "Invalid ride ID" });
+    res.status(500).json({ error: "Failed to fetch available rides" });
   }
 });
 
 
-// PATCH /rides/:id - Update ride status
-app.patch('/rides/:id', authenticate, async (req, res) => {
+// ACCEPT a Ride (Driver Only)
+app.patch('/rides/:id/accept', authenticate, authorize(['driver']), async (req, res) => {
   try {
-    const result = await db.collection('rides').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: { status: req.body.status } }
-    );
-    if (result.modifiedCount === 0) {
+    const rideId = new ObjectId(req.params.id);
+    const driverId = new ObjectId(req.user.userId);
+
+    // 1. Check if ride exists and is still available
+    const ride = await db.collection('rides').findOne({ _id: rideId });
+    
+    if (!ride) {
       return res.status(404).json({ error: "Ride not found" });
     }
-    res.status(200).json({ updated: result.modifiedCount });
+    if (ride.status !== "requested") {
+      return res.status(400).json({ error: "Ride is no longer available" });
+    }
+
+    // 2. Assign Driver and Update Status
+    const result = await db.collection('rides').updateOne(
+      { _id: rideId },
+      { 
+        $set: { 
+          status: "accepted", 
+          driverId: driverId,
+          acceptedAt: new Date()
+        } 
+      }
+    );
+
+    res.status(200).json({ message: "Ride accepted!", rideId: rideId });
+
   } catch (err) {
-    //Handle invalid ID format or DB errors
-    res.status(400).json({ error: "Invalid ride ID or data" });
+    res.status(400).json({ error: "Invalid Ride ID" });
+  }
+});
+
+// COMPLETE a Ride (Driver Only)
+app.patch('/rides/:id/complete', authenticate, authorize(['driver']), async (req, res) => {
+  try {
+    const rideId = new ObjectId(req.params.id);
+    const driverId = new ObjectId(req.user.userId);
+
+    // Only the assigned driver can complete the ride
+    const result = await db.collection('rides').updateOne(
+      { _id: rideId, driverId: driverId, status: "accepted" },
+      { 
+        $set: { 
+          status: "completed", 
+          completedAt: new Date()
+        } 
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({ error: "Ride cannot be completed (wrong driver or status)" });
+    }
+
+    res.status(200).json({ message: "Ride completed successfully" });
+
+  } catch (err) {
+    res.status(400).json({ error: "Invalid Ride ID" });
   }
 });
 
